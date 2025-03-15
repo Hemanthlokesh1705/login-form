@@ -1,66 +1,32 @@
-#include<iostream>
-#include<fstream>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace std;
 
-class temp{
-     string userName,userPass,userEmail;
-     string searchName,searchPass,searchEmail;
-     fstream file;
+class UserAuth {
+private:
+    string userName, userEmail, userPass;
+    string searchName, searchEmail, newPassword;
+    fstream file;
 
-     public:
-         void login();
-         void signUp();
-         void forget_pass(); 
-}obj;
+public:
+    void signUp();
+    bool login();
+    void forgetPass();
+};
 
-int main(){
-     char choice;
-    
-     cout<<"1.Login"<<endl;
-     cout<<"2.Sign-Up"<<endl;
-     cout<<"3.Forget password"<<endl;
-     cout<<"4.Exit"<<endl;
-
-     cout<<"Enter your choice:"<<endl;
-     cin>>choice;
-    
-     switch (choice)
-     {
-     case '1':
-        cin.ignore();
-        obj.login();
-        break;
-        case '2':
-        cin.ignore();
-        obj.signUp();
-        break;
-        case '3':
-        cin.ignore();
-        obj.forget_pass();
-        break;
-        case '4':
-        return 0;
-        break;
-     
-     default:
-     cout<<"Invalid Choice";
-        break;
-     }
-    
-
-}
-void temp::signUp() {
+// Function to register a new user
+void UserAuth::signUp() {
     cout << "\n********** SIGN-UP **********\n";
-    cout << "Enter your username: ";
+    cout << "Enter Username: ";
     cin.ignore();
     getline(cin, userName);
-    cout << "Enter your email: ";
+    cout << "Enter Email: ";
     getline(cin, userEmail);
-    cout << "Enter your password: ";
+    cout << "Enter Password: ";
     getline(cin, userPass);
 
-    // Open file in append mode
     file.open("login_info.txt", ios::out | ios::app);
     if (!file) {
         cout << "\n❌ Error: Unable to access the database.\n";
@@ -73,18 +39,19 @@ void temp::signUp() {
     cout << "\n✅ Sign-Up Successful! You can now log in.\n";
 }
 
-void temp::login() {
+// Function to log in
+bool UserAuth::login() {
     cout << "\n********** LOGIN **********\n";
-    cout << "Enter your username: ";
+    cout << "Enter Username: ";
     cin.ignore();
     getline(cin, searchName);
-    cout << "Enter your password: ";
-    getline(cin, searchPass);
+    cout << "Enter Password: ";
+    getline(cin, userPass);
 
     file.open("login_info.txt", ios::in);
     if (!file) {
         cout << "\n❌ Error: No user data found. Please sign up first.\n";
-        return;
+        return false;
     }
 
     bool found = false;
@@ -92,30 +59,35 @@ void temp::login() {
         getline(file, userEmail, '*');
         getline(file, userPass, '\n');
 
-        if (userName == searchName && userPass == searchPass) {
-            found = true;
-            cout << "\n✅ Login Successful!";
-            cout << "\nUsername: " << userName;
-            cout << "\nEmail: " << userEmail << endl;
-            break; // Stop searching once found
+        if (userName == searchName) {
+            if (userPass == userPass) {
+                found = true;
+                cout << "\n✅ Login Successful!";
+                cout << "\nUsername: " << userName;
+                cout << "\nEmail: " << userEmail << endl;
+                break;
+            } else {
+                cout << "\n❌ Incorrect Password!\n";
+                file.close();
+                return false;
+            }
         }
     }
 
     file.close();
-
     if (!found) {
-        cout << "\n❌ Incorrect Username or Password. Try again!\n";
+        cout << "\n❌ Username not found!\n";
     }
+    return found;
 }
 
-
-
-void temp::forget_pass() {
-    cout << "\n********** FORGOT PASSWORD **********\n";
-    cout << "Enter your username: ";
+// Function to reset password
+void UserAuth::forgetPass() {
+    cout << "\n********** RESET PASSWORD **********\n";
+    cout << "Enter Username: ";
     cin.ignore();
     getline(cin, searchName);
-    cout << "Enter your email: ";
+    cout << "Enter Email: ";
     getline(cin, searchEmail);
 
     file.open("login_info.txt", ios::in);
@@ -125,15 +97,18 @@ void temp::forget_pass() {
     }
 
     bool found = false;
+    string tempData = "";
     while (getline(file, userName, '*')) {
         getline(file, userEmail, '*');
         getline(file, userPass, '\n');
 
         if (userName == searchName && userEmail == searchEmail) {
-            cout << "\n✅ Account Found!";
-            cout << "\nYour Password: " << userPass << endl;
             found = true;
-            break; // Stop searching once found
+            cout << "\n✅ Account Found! Enter New Password: ";
+            getline(cin, newPassword);
+            tempData += userName + "*" + userEmail + "*" + newPassword + "\n";
+        } else {
+            tempData += userName + "*" + userEmail + "*" + userPass + "\n";
         }
     }
 
@@ -141,5 +116,46 @@ void temp::forget_pass() {
 
     if (!found) {
         cout << "\n❌ No matching account found. Please check your details.\n";
+        return;
     }
+
+    // Update file with new password
+    file.open("login_info.txt", ios::out);
+    file << tempData;
+    file.close();
+
+    cout << "\n✅ Password Updated Successfully! You can now log in with your new password.\n";
 }
+
+// Main function with iterative menu
+int main() {
+    UserAuth obj;
+    char choice;
+
+    while (true) {
+        cout << "\n========== MENU ==========\n";
+        cout << "1. Sign-Up\n";
+        cout << "2. Login\n";
+        cout << "3. Forget Password\n";
+        cout << "4. Exit\n";
+        cout << "Enter Your Choice: ";
+        cin >> choice;
+
+        switch (choice) {
+            case '1':
+                obj.signUp();
+                break;
+            case '2':
+                obj.login();
+                break;
+            case '3':
+                obj.forgetPass();
+                break;
+            case '4':
+                cout << "\n👋 Exiting Program. Goodbye!\n";
+                return 0;
+            default:
+                cout << "\n❌ Invalid Choice! Please try again.\n";
+        }
+    }
+} 
