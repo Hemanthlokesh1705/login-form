@@ -19,21 +19,45 @@ public:
 // Function to register a new user
 void UserAuth::signUp() {
     cout << "\n********** SIGN-UP **********\n";
-    cout << "Enter Username: ";
-    cin.ignore();
-    getline(cin, userName);
-    cout << "Enter Email: ";
-    getline(cin, userEmail);
-    cout << "Enter Password: ";
-    getline(cin, userPass);
 
+    string newName, newEmail, newPass;
+    cout << "Enter Username: ";
+    cin.ignore(); // call this only once before first getline after cin >>
+    getline(cin, newName);
+
+    cout << "Enter Email: ";
+    getline(cin, newEmail);
+
+    cout << "Enter Password: ";
+    getline(cin, newPass);
+
+    // Check if user already exists
+    file.open("login_info.txt", ios::in);
+    if (!file) {
+        cout << "\n⚠️ Database not found, creating new...\n";
+    } else {
+        string existingName, existingEmail, existingPass;
+        while (getline(file, existingName, '*')) {
+            getline(file, existingEmail, '*');
+            getline(file, existingPass, '\n');
+
+            if (existingEmail == newEmail || existingName == newName) {
+                cout << "\n❌ Account already exists with this username or email.\n";
+                file.close();
+                return;
+            }
+        }
+        file.close();
+    }
+
+    // Store new user info
     file.open("login_info.txt", ios::out | ios::app);
     if (!file) {
         cout << "\n❌ Error: Unable to access the database.\n";
         return;
     }
 
-    file << userName << "*" << userEmail << "*" << userPass << endl;
+    file << newName << "*" << newEmail << "*" << newPass << endl;
     file.close();
 
     cout << "\n✅ Sign-Up Successful! You can now log in.\n";
